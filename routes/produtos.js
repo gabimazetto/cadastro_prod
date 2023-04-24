@@ -43,6 +43,40 @@ router.get("/produtos", async (req, res) => {
 });
 
 
+// Consultar com filtro: http://localhost:3000/produtos?nome=me
+router.get("/produtos", async (req, res) => {
+    try {
+    const { nome, categoria, precoMin, precoMax } = req.query;
+    const filtro = {};
+
+    if (nome) {
+        filtro.nome = { $regex: nome, $options: "i" };
+    }
+    if (categoria) {
+        filtro.categoria = categoria;
+    }
+    if (precoMin && precoMax) {
+        filtro.preco = { $gte: precoMin, $lte: precoMax };
+    } else if (precoMin) {
+        filtro.preco = { $gte: precoMin };
+    } else if (precoMax) {
+        filtro.preco = { $lte: precoMax };
+    }
+
+    const produtos = await Produto.find(filtro);
+
+    if (produtos.length > 0) {
+        res.json(produtos);
+    } else {
+        res.status(404).json({ mensagem: "Nenhum produto encontrado!" });
+    }
+    } catch (error) {
+    console.log("Ocorreu um erro ", error);
+    res.status(500).json({ mensagem: "Ocorreu um erro", error });
+    }
+});
+
+
 // Consulta por id (GET)
 router.get("/produtos/:id", async (req, res) => {
     try {
