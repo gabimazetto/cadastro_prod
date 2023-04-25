@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Joi = require("joi");
 
+// Modelagem produto
 const produto = new mongoose.Schema({
     nome: {
         type: String,
@@ -33,8 +34,7 @@ const produto = new mongoose.Schema({
     },
     imagem: {
         type: String,
-        required: true,
-        validate: [validateImagem, "URL de imagem inválida"],
+        required: true
     },
 });
 
@@ -44,9 +44,10 @@ function validateDataDesconto(value) {
     return !this.desconto || (value && value >= new Date());
 }
 // Função para validar a URL da imagem
-function validateImagem(value) {
-    return /^(http|https):\/\/[^ "]+$/.test(value);
-}
+// function validateImagem(value) {
+//     return /^(http|https):\/\/[^ "]+$/.test(value);
+// }
+
 const Produto = mongoose.model("Produto", produto);
 
 // Definição do esquema Joi para validação
@@ -82,10 +83,41 @@ const produtoJoi = Joi.object({
         }),
     categoria: Joi.string().required().messages({
         "any.required": "O campo categoria é obrigatório",
-    }),
-    imagem: Joi.string().uri().messages({
-        "string.uri": "O campo imagem deve ser uma URL válida",
-    }),
+    })
 });
 
-module.exports = { Produto, produtoJoi };
+
+// Definição do esquema Joi para validação
+const produtoJoiAtualiza = Joi.object({
+    nome: Joi.string(),
+    descricao: Joi.string(),
+    quantidade: Joi.number().integer().min(1).messages({
+      "number.integer": "O campo quantidade deve ser um número inteiro",
+      "number.min": "O campo quantidade deve ter valor mínimo de 1",
+    }),
+    preco: Joi.string().messages({
+      "any.required": "O campo preço é obrigatório",
+      "string.base": "O campo preço deve ser uma string",
+    }),
+    desconto: Joi.string().min(0).max(100).messages({
+      "any.required": "O campo preço é obrigatório",
+      "string.base": "O campo preço deve ser uma string",
+    }),
+    dataDesconto: Joi.date()
+      .iso()
+      .when("desconto", {
+        is: Joi.exist(),
+        then: Joi.required(),
+      })
+      .messages({
+        "date.iso":
+          "O campo data de desconto deve ser uma data válida no formato ISO",
+      }),
+    categoria: Joi.string(),
+  });
+
+
+
+
+
+module.exports = { Produto, produtoJoi, produtoJoiAtualiza };
